@@ -598,7 +598,7 @@ void thread_sleep(struct thread *cur_thread, int64_t tick)
     old_level = intr_disable (); //interrupt off
     thread_block (); // cur block
     cur_thread->wakeup = tick;
-    list_insert_ordered(&sleeping_list, &(cur_thread->elem), compare_tick_increasing);
+    list_insert_ordered(&sleeping_list, &(cur_thread->elem), compare_tick_increasing, NULL);
     intr_set_level (old_level); // interrupt level 복구
 }
 
