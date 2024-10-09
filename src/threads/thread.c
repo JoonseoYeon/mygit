@@ -604,7 +604,7 @@ void thread_sleep(struct thread *cur_thread, int64_t tick)
 
 static bool compare_tick_increasing (const struct list_elem *prev, const struct list_elem *next) // 앞 원소가 뒤 원소보다 작으면 true
 {
-  return (list_entry(prev, struct thread, elem) -> wakeup_tick < list_entry(next, struct thread, elem) -> wakeup_tick ? true : false);
+  return (list_entry(prev, struct thread, elem) -> wakeup < list_entry(next, struct thread, elem) -> wakeup ? true : false);
 }
 
 void thread_wake (int64_t cur_tick)
