@@ -79,6 +79,7 @@ static bool compare_tick_increasing (const struct list_elem *prev, const struct 
 void thread_wake (int64_t cur_tick);
 /*ass1 priority scheduler 추가 구현 함수*/
 static bool compare_priority_decreasing (const struct list_elem *prev, const struct list_elem *next);
+static bool check_priority_yield(); //ready_list 첫번째 element랑 비교해서 current thread priority가 더 작으면 yield
 /* Initializes the threading system by transforming the code
    that's currently running into a thread.  This can't work in
    general and it is possible in this case only because loader.S
@@ -208,6 +209,10 @@ thread_create (const char *name, int priority,
 
   /* Add to run queue. */
   thread_unblock (t);
+  if (check_priority_yield()) 
+  {
+    thread_yield();
+  }
 
   return tid;
 }
@@ -245,7 +250,7 @@ thread_unblock (struct thread *t)
   old_level = intr_disable ();
   ASSERT (t->status == THREAD_BLOCKED);
   t->status = THREAD_READY;
-  list_insert_ordered (&ready_list, &t->elem, compare_tick_increasing, NULL);
+  list_insert_ordered (&ready_list, &t->elem, compare_priority_decreasing, NULL);
   intr_set_level (old_level);
 }
 
@@ -316,9 +321,8 @@ thread_yield (void)
   old_level = intr_disable ();
   if (cur != idle_thread)
   {
-        list_insert_ordered (&ready_list, &cur->elem, compare_tick_increasing, NULL);
+        list_insert_ordered (&ready_list, &cur->elem, compare_priority_decreasing, NULL);
         cur->status = THREAD_READY;
-
   } 
   schedule ();
   intr_set_level (old_level);
@@ -346,6 +350,10 @@ void
 thread_set_priority (int new_priority) 
 {
   thread_current ()->priority = new_priority;
+  if (check_priority_yield())
+  {
+    thread_yield();
+  }
 }
 
 /* Returns the current thread's priority. */
@@ -638,4 +646,13 @@ void thread_wake (int64_t cur_tick)
 static bool compare_priority_decreasing (const struct list_elem *prev, const struct list_elem *next) // 앞 원소가 뒤 원소보다 크면 true
 {
   return (list_entry(prev, struct thread, elem) -> priority > list_entry(next, struct thread, elem) -> priority ? true : false);
+}
+
+static bool check_priority_yield()
+{
+  if(list_empty(&ready_list))
+  {
+    return false;
+  }
+  return (thread_current() -> priority < list_entry(list_front(&ready_list), struct thread, elem) -> priority ? true : false);
 }
