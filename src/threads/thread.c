@@ -73,10 +73,12 @@ static void *alloc_frame (struct thread *, size_t size);
 static void schedule (void);
 void thread_schedule_tail (struct thread *prev);
 static tid_t allocate_tid (void);
-/*알람 클락 구현 추가 함수*/
+/*ass1 알람 클락 구현 추가 함수*/
 void thread_sleep(struct thread *cur_thread, int64_t tick);
 static bool compare_tick_increasing (const struct list_elem *prev, const struct list_elem *next);
 void thread_wake (int64_t cur_tick);
+/*ass1 priority scheduler 추가 구현 함수*/
+static bool compare_priority_decreasing (const struct list_elem *prev, const struct list_elem *next);
 /* Initializes the threading system by transforming the code
    that's currently running into a thread.  This can't work in
    general and it is possible in this case only because loader.S
@@ -240,11 +242,10 @@ thread_unblock (struct thread *t)
   enum intr_level old_level;
 
   ASSERT (is_thread (t));
-
   old_level = intr_disable ();
   ASSERT (t->status == THREAD_BLOCKED);
-  list_push_back (&ready_list, &t->elem);
   t->status = THREAD_READY;
+  list_insert_ordered (&ready_list, &t->elem, compare_tick_increasing, NULL);
   intr_set_level (old_level);
 }
 
@@ -313,9 +314,12 @@ thread_yield (void)
   ASSERT (!intr_context ());
 
   old_level = intr_disable ();
-  if (cur != idle_thread) 
-    list_push_back (&ready_list, &cur->elem);
-  cur->status = THREAD_READY;
+  if (cur != idle_thread)
+  {
+        list_insert_ordered (&ready_list, &cur->elem, compare_tick_increasing, NULL);
+        cur->status = THREAD_READY;
+
+  } 
   schedule ();
   intr_set_level (old_level);
 }
@@ -629,4 +633,9 @@ void thread_wake (int64_t cur_tick)
       break;
     }
   }
+}
+
+static bool compare_priority_decreasing (const struct list_elem *prev, const struct list_elem *next) // 앞 원소가 뒤 원소보다 크면 true
+{
+  return (list_entry(prev, struct thread, elem) -> priority > list_entry(next, struct thread, elem) -> priority ? true : false);
 }
