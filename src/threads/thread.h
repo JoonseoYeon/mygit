@@ -93,7 +93,7 @@ struct thread
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /* List element. */
    /*알람 클락 추가 구현*/
-   int64_t wakeup; // 일어날 tick: cur_tick + 잠자는 시간
+    int64_t wakeup; // 일어날 tick: cur_tick + 잠자는 시간
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
     uint32_t *pagedir;                  /* Page directory. */

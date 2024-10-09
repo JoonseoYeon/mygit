@@ -594,6 +594,7 @@ void thread_sleep(struct thread *cur_thread, int64_t tick)
 {
     ASSERT (!intr_context ()); // external interrupt은 sleep하면 안되기 때문
     ASSERT(cur_thread != idle_thread);   // idle thread는 sleep하면 안됨
+    ASSERT(cur_thread != NULL); // cur_thread 확인 error detect
     enum intr_level old_level;
     old_level = intr_disable (); //interrupt off
     cur_thread->wakeup = tick;
@@ -610,6 +611,11 @@ static bool compare_tick_increasing (const struct list_elem *prev, const struct 
 void thread_wake (int64_t cur_tick)
 {
   struct list_elem *e = list_begin (&sleeping_list);
+  if (e == NULL)
+  {
+    printf("wakeup error"); //for debugging
+    return;
+  }
   while (e != list_end (&sleeping_list))
   {
     struct thread *thread_elem = list_entry (e, struct thread, elem);
