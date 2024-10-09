@@ -28,6 +28,9 @@ static struct list ready_list;
    when they are first scheduled and removed when they exit. */
 static struct list all_list;
 
+/* 알람 클락 구현*/
+static struct list sleeping_list; // 알람 클락으로 재운 list
+
 /* Idle thread. */
 static struct thread *idle_thread;
 
@@ -70,7 +73,9 @@ static void *alloc_frame (struct thread *, size_t size);
 static void schedule (void);
 void thread_schedule_tail (struct thread *prev);
 static tid_t allocate_tid (void);
-
+/*알람 클락 구현 추가 함수*/
+void thread_sleep(struct thread *cur_thread, int64_t tick);
+static bool compare_tick_increasing (const struct list_elem *prev, const struct list_elem *next);
 /* Initializes the threading system by transforming the code
    that's currently running into a thread.  This can't work in
    general and it is possible in this case only because loader.S
@@ -582,3 +587,21 @@ allocate_tid (void)
 /* Offset of `stack' member within `struct thread'.
    Used by switch.S, which can't figure it out on its own. */
 uint32_t thread_stack_ofs = offsetof (struct thread, stack);
+
+/* 알람 클락 추가 구현 함수*/
+void thread_sleep(struct thread *cur_thread, int64_t tick)
+{
+    ASSERT (!intr_context ()); // external interrupt은 sleep하면 안되기 때문
+    ASSERT(cur_thread != idle_thread);   // idle thread는 sleep하면 안됨
+    enum intr_level old_level;
+    old_level = intr_disable (); //interrupt off
+    thread_block (); // cur block
+    cur_thread->wakeup = tick;
+    list_insert_ordered(&sleeping_list, &(cur_thread->elem), compare_tick_increasing);
+    intr_set_level (old_level); // interrupt level 복구
+}
+
+static bool compare_tick_increasing (const struct list_elem *prev, const struct list_elem *next) // 앞 원소가 뒤 원소보다 작으면 true
+{
+  return (list_entry(prev, struct thread, elem) -> wakeup_tick < list_entry(next, struct thread, elem) -> wakeup_tick ? true : false);
+}
