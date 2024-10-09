@@ -596,9 +596,9 @@ void thread_sleep(struct thread *cur_thread, int64_t tick)
     ASSERT(cur_thread != idle_thread);   // idle thread는 sleep하면 안됨
     enum intr_level old_level;
     old_level = intr_disable (); //interrupt off
-    thread_block (); // cur block
     cur_thread->wakeup = tick;
     list_insert_ordered(&sleeping_list, &(cur_thread->elem), compare_tick_increasing, NULL);
+    thread_block (); // cur block. 맨 뒤에 넣어야됨. 바로 schedule
     intr_set_level (old_level); // interrupt level 복구
 }
 
