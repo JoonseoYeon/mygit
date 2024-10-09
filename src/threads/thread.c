@@ -621,8 +621,8 @@ void thread_wake (int64_t cur_tick)
     struct thread *thread_elem = list_entry (e, struct thread, elem);
     if (cur_tick >= thread_elem->wakeup)
     {	
-      thread_unblock (thread_elem);
       e = list_remove (e); //sleeping_list에서 제거
+      thread_unblock (thread_elem);
     }
     else 
     {
