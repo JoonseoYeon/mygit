@@ -211,10 +211,7 @@ thread_create (const char *name, int priority,
 
   /* Add to run queue. */
   thread_unblock (t);
-  if (check_priority_yield()) 
-  {
-    thread_yield();
-  }
+  check_priority_yield();
 
   return tid;
 }
@@ -251,8 +248,8 @@ thread_unblock (struct thread *t)
   ASSERT (is_thread (t));
   old_level = intr_disable ();
   ASSERT (t->status == THREAD_BLOCKED);
+  list_insert_ordered (&ready_list, &t->elem, compare_priority_decreasing, 0);
   t->status = THREAD_READY;
-  list_insert_ordered (&ready_list, &t->elem, compare_priority_decreasing, NULL);
   intr_set_level (old_level);
 }
 
@@ -321,11 +318,11 @@ thread_yield (void)
   ASSERT (!intr_context ());
 
   old_level = intr_disable ();
+  cur->status = THREAD_READY;
   if (cur != idle_thread)
   {
-        list_insert_ordered (&ready_list, &cur->elem, compare_priority_decreasing, NULL);
-        cur->status = THREAD_READY;
-  } 
+    list_insert_ordered (&ready_list, &cur->elem, compare_priority_decreasing, NULL);
+  }
   schedule ();
   intr_set_level (old_level);
 }
@@ -352,7 +349,7 @@ void
 thread_set_priority (int new_priority) 
 {
   thread_current ()->priority = new_priority;
-  if (check_priority_yield())
+  if(check_priority_yield())
   {
     thread_yield();
   }
@@ -647,7 +644,7 @@ void thread_wake (int64_t cur_tick)
 
 bool compare_priority_decreasing (const struct list_elem *prev, const struct list_elem *next, void *aux UNUSED) // 앞 원소가 뒤 원소보다 크면 true
 {
- return (list_entry(prev, struct thread, elem) -> priority > list_entry(next, struct thread, elem) -> priority ? true : false);
+  return (list_entry(prev, struct thread, elem) -> priority > list_entry(next, struct thread, elem) -> priority ? true : false);
 }
 
 bool check_priority_yield()
@@ -658,6 +655,6 @@ bool check_priority_yield()
   }
   else
   {
-      return (thread_current() -> priority < list_entry(list_front(&ready_list), struct thread, elem) -> priority ? true : false);
+     return (thread_current() -> priority < list_entry(list_front(&ready_list), struct thread, elem) -> priority ? true : false);
   }
 }

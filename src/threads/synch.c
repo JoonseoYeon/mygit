@@ -68,7 +68,7 @@ sema_down (struct semaphore *sema)
   old_level = intr_disable ();
   while (sema->value == 0) 
     {
-      list_insert_ordered (&sema->waiters, &thread_current ()->elem, compare_priority_decreasing, 0);
+      list_insert_ordered (&sema->waiters, &thread_current ()->elem, compare_priority_decreasing, NULL);
       thread_block ();
     }
   sema->value--;
@@ -121,10 +121,9 @@ sema_up (struct semaphore *sema)
   sema->value++;
   if(check_priority_yield())
   {
-    thread_yeild();
+    thread_yield();
   }
   intr_set_level (old_level);
-  return;
 }
 
 static void sema_test_helper (void *sema_);
