@@ -139,4 +139,9 @@ void thread_set_nice (int);
 int thread_get_recent_cpu (void);
 int thread_get_load_avg (void);
 
+bool compare_priority_decreasing (const struct list_elem *prev, const struct list_elem *next, void *aux UNUSED);
+void check_priority_yield(); //ready_list 첫번째 element랑 비교해서 current thread priority가 더 작으면 yield
+bool thread_compare_priority (struct list_elem *l, struct list_elem *s, void *aux UNUSED);
+
+
 #endif /* threads/thread.h */
