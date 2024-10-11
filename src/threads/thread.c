@@ -75,11 +75,11 @@ void thread_schedule_tail (struct thread *prev);
 static tid_t allocate_tid (void);
 /*ass1 알람 클락 구현 추가 함수*/
 void thread_sleep(struct thread *cur_thread, int64_t tick);
-static bool compare_tick_increasing (const struct list_elem *prev, const struct list_elem *next);
+bool compare_tick_increasing (const struct list_elem *prev, const struct list_elem *next);
 void thread_wake (int64_t cur_tick);
 /*ass1 priority scheduler 추가 구현 함수*/
 bool compare_priority_decreasing (const struct list_elem *prev, const struct list_elem *next, void *aux UNUSED);
-bool check_priority_yield(); //ready_list 첫번째 element랑 비교해서 current thread priority가 더 작으면 yield
+bool check_priority_yield(void); //ready_list 첫번째 element랑 비교해서 current thread priority가 더 작으면 yield
 bool thread_compare_priority (struct list_elem *l, struct list_elem *s, void *aux UNUSED);
 
 /* Initializes the threading system by transforming the code
@@ -211,7 +211,9 @@ thread_create (const char *name, int priority,
 
   /* Add to run queue. */
   thread_unblock (t);
-  check_priority_yield();
+  if(check_priority_yield()){
+    thread_yield();
+  }
 
   return tid;
 }
@@ -614,7 +616,7 @@ void thread_sleep(struct thread *cur_thread, int64_t tick)
     intr_set_level (old_level); // interrupt level 복구
 }
 
-static bool compare_tick_increasing (const struct list_elem *prev, const struct list_elem *next) // 앞 원소가 뒤 원소보다 작으면 true
+bool compare_tick_increasing (const struct list_elem *prev, const struct list_elem *next) // 앞 원소가 뒤 원소보다 작으면 true
 {
   return (list_entry(prev, struct thread, elem) -> wakeup < list_entry(next, struct thread, elem) -> wakeup ? true : false);
 }
@@ -647,7 +649,7 @@ bool compare_priority_decreasing (const struct list_elem *prev, const struct lis
   return (list_entry(prev, struct thread, elem) -> priority > list_entry(next, struct thread, elem) -> priority ? true : false);
 }
 
-bool check_priority_yield()
+bool check_priority_yield(void)
 {
   if(list_empty(&ready_list))
   {
