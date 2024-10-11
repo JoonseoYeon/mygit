@@ -41,6 +41,9 @@ void cond_wait (struct condition *, struct lock *);
 void cond_signal (struct condition *, struct lock *);
 void cond_broadcast (struct condition *, struct lock *);
 
+/*donation 구현*/
+bool donator_p_decreaing(const struct list_elem *prev, const struct list_elem *next, void *aux UNUSED);
+void priority_donation();
 /* Optimization barrier.
 
    The compiler will not reorder operations across an

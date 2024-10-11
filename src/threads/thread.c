@@ -350,7 +350,11 @@ thread_foreach (thread_action_func *func, void *aux)
 void
 thread_set_priority (int new_priority) 
 {
-  thread_current ()->priority = new_priority;
+  thread_current()->own_priority=new_priority; // 고유의 priority 변경
+  if(new_priority > thread_current()->priority)// 현재 priority보다 클떄만 변경
+  {
+    thread_current()->priority=new_priority;
+  }
   if(check_priority_yield())
   {
     thread_yield();
@@ -482,7 +486,10 @@ init_thread (struct thread *t, const char *name, int priority)
   t->stack = (uint8_t *) t + PGSIZE;
   t->priority = priority;
   t->magic = THREAD_MAGIC;
-
+  /*priority donation구현*/
+  list_init(&t->donators_list);
+  t->own_priority=priority;
+  t->waiting_lock=NULL;
   old_level = intr_disable ();
   list_push_back (&all_list, &t->allelem);
   intr_set_level (old_level);
@@ -659,4 +666,12 @@ bool check_priority_yield(void)
   {
      return (thread_current() -> priority < list_entry(list_front(&ready_list), struct thread, elem) -> priority ? true : false);
   }
+}
+
+void sorting_ready_list()
+{
+  if (!list_empty (&ready_list))
+  {
+    list_sort (&ready_list, compare_priority_decreasing, NULL); 
+  } 
 }

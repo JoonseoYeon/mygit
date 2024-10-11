@@ -94,6 +94,11 @@ struct thread
     struct list_elem elem;              /* List element. */
    /*알람 클락 추가 구현*/
     int64_t wakeup; // 일어날 tick: cur_tick + 잠자는 시간
+   /*donation 추가 구현*/
+   struct list donators_list; // donate 해준 threads
+   struct list_elem donate_elem; // donators list_elem
+   int own_priority; // 원래 자신의 priority
+   struct lock* waiting_lock; // thread가 acuire한 lock: 기다리고 있음
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
     uint32_t *pagedir;                  /* Page directory. */
@@ -147,6 +152,7 @@ void thread_wake (int64_t cur_tick);
 bool compare_priority_decreasing (const struct list_elem *prev, const struct list_elem *next, void *aux UNUSED);
 bool check_priority_yield(void); //ready_list 첫번째 element랑 비교해서 current thread priority가 더 작으면 yield
 bool thread_compare_priority (struct list_elem *l, struct list_elem *s, void *aux UNUSED);
-
+/*inversion 추가 구현*/
+void sorting_ready_list();
 
 #endif /* threads/thread.h */
