@@ -151,8 +151,8 @@ void thread_wake (int64_t cur_tick);
 /*ass1 priority scheduler 추가 구현 함수*/
 bool compare_priority_decreasing (const struct list_elem *prev, const struct list_elem *next, void *aux UNUSED);
 bool check_priority_yield(void); //ready_list 첫번째 element랑 비교해서 current thread priority가 더 작으면 yield
-bool thread_compare_priority (struct list_elem *l, struct list_elem *s, void *aux UNUSED);
 /*inversion 추가 구현*/
 void sorting_ready_list();
+bool donator_p_decreaing(const struct list_elem *prev, const struct list_elem *next, void *aux UNUSED);
 
 #endif /* threads/thread.h */

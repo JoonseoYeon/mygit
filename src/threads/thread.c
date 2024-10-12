@@ -80,7 +80,7 @@ void thread_wake (int64_t cur_tick);
 /*ass1 priority scheduler 추가 구현 함수*/
 bool compare_priority_decreasing (const struct list_elem *prev, const struct list_elem *next, void *aux UNUSED);
 bool check_priority_yield(void); //ready_list 첫번째 element랑 비교해서 current thread priority가 더 작으면 yield
-bool thread_compare_priority (struct list_elem *l, struct list_elem *s, void *aux UNUSED);
+bool donator_p_decreaing(const struct list_elem *prev, const struct list_elem *next, void *aux UNUSED);
 
 /* Initializes the threading system by transforming the code
    that's currently running into a thread.  This can't work in
@@ -350,11 +350,21 @@ thread_foreach (thread_action_func *func, void *aux)
 void
 thread_set_priority (int new_priority) 
 {
-  thread_current()->own_priority=new_priority; // 고유의 priority 변경
-  if(new_priority > thread_current()->priority)// 현재 priority보다 클떄만 변경
+  struct thread* cur = thread_current();
+  cur->own_priority = new_priority; // 고유의 priority 변경
+  cur->priority = new_priority;
+  if(!list_empty(&cur->donators_list)){
+    list_sort(&cur->donators_list, donator_p_decreaing, NULL);
+    if(list_entry (list_front (&cur->donators_list), struct thread, donate_elem)->priority > cur->own_priority) // donator 중에 가장 큰 prirotiy로 변경
+      {
+        cur -> priority = list_entry (list_front (&cur->donators_list), struct thread, donate_elem)->priority;
+      }
+  }
+  
+  /*if(new_priority > thread_current()->priority)// 현재 priority보다 클떄만 변경
   {
     thread_current()->priority=new_priority;
-  }
+  }*/
   if(check_priority_yield())
   {
     thread_yield();
@@ -674,4 +684,10 @@ void sorting_ready_list()
   {
     list_sort (&ready_list, compare_priority_decreasing, NULL); 
   } 
+}
+
+/*donation 구현*/
+bool donator_p_decreaing(const struct list_elem *prev, const struct list_elem *next, void *aux UNUSED)
+{
+	return list_entry (prev, struct thread, donate_elem)->priority > list_entry (next, struct thread, donate_elem)->priority;
 }

@@ -203,7 +203,7 @@ lock_acquire (struct lock *lock)
   ASSERT (lock != NULL);
   ASSERT (!intr_context ());
   ASSERT (!lock_held_by_current_thread (lock));
-  if (lock->holder != NULL)
+  if (lock->holder != NULL) //lock 사용중
   {
     thread_current()->waiting_lock = lock;
     list_insert_ordered (&lock->holder->donators_list, &thread_current()->donate_elem, 
@@ -260,7 +260,7 @@ lock_release (struct lock *lock)
   else // donate 있을 때
   {
     elem = list_begin (&cur->donators_list);
-    while(elem = list_end (&cur->donators_list)) // release 된 donators를 list에서 제거
+    while(elem != list_end (&cur->donators_list)) // release 된 donators를 list에서 제거
     {
       struct thread *t = list_entry(elem, struct thread, donate_elem);
       struct list_elem *next = list_next(elem); // 다음 요소를 미리 저장(remove 대비)
@@ -410,19 +410,15 @@ sema_compare_priority(const struct list_elem *prev, const struct list_elem *next
 }
 
 /*donation 구현*/
-bool donator_p_decreaing(const struct list_elem *prev, const struct list_elem *next, void *aux UNUSED)
-{
-	return list_entry (prev, struct thread, donate_elem)->priority> list_entry (next, struct thread, donate_elem)->priority;
-}
 
-void priority_donation (void)
+void donate_priority(void)
 {
   struct thread *t = thread_current();
   struct thread *donated;
-  for (t = thread_current(); t->waiting_lock != NULL; t=donated) // lock 가지고 있는 애들한태 donate 재귀적으로
+  for (t = thread_current(); t->waiting_lock != NULL; t = donated) // lock 가지고 있는 애들한태 donate 재귀적으로
   {
     donated = t->waiting_lock->holder;
-    if (t->priority > donated->priority) 
+    if (t->priority > donated->priority)
     {
       donated->priority = t->priority;
     }
