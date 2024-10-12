@@ -203,6 +203,14 @@ lock_acquire (struct lock *lock)
   ASSERT (lock != NULL);
   ASSERT (!intr_context ());
   ASSERT (!lock_held_by_current_thread (lock));
+
+  if (thread_mlfqs) {
+    sema_down (&lock->semaphore);
+    //thread_current()->waiting_lock = NULL;
+    lock->holder = thread_current ();
+    return;
+  }
+
   if (lock->holder != NULL) //lock 사용중
   {
     thread_current()->waiting_lock = lock;
@@ -250,6 +258,11 @@ lock_release (struct lock *lock)
   /*donation 구현*/
   struct thread* cur = thread_current();
   struct list_elem *elem;
+  if(thread_mlfqs){
+    lock->holder = NULL;
+    sema_up (&lock->semaphore);
+    return; 
+  }
   if(list_empty(&thread_current()->donators_list))// donate받은거 없을 때
   {
     /*원래 구현*/

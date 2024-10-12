@@ -99,6 +99,9 @@ struct thread
    struct list_elem donate_elem; // donators list_elem
    int own_priority; // 원래 자신의 priority
    struct lock* waiting_lock; // thread가 acuire한 lock: 기다리고 있음
+   /*advanced scheduler 추가 구현*/
+   int nice;
+   int recent_cpu;
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
     uint32_t *pagedir;                  /* Page directory. */
@@ -152,7 +155,23 @@ void thread_wake (int64_t cur_tick);
 bool compare_priority_decreasing (const struct list_elem *prev, const struct list_elem *next, void *aux UNUSED);
 bool check_priority_yield(void); //ready_list 첫번째 element랑 비교해서 current thread priority가 더 작으면 yield
 /*inversion 추가 구현*/
-void sorting_ready_list();
+void sorting_ready_list(void);
 bool donator_p_decreaing(const struct list_elem *prev, const struct list_elem *next, void *aux UNUSED);
+/*advanced scheduler 추가 구현 함수*/
+int int2fp(int n);
+int fp2int(int x);
+int fp2int_round(int x);
+int add_fp(int x, int y);
+int sub_fp(int x, int y);
+int add_fp_int(int x, int n);
+int sub_fp_int(int x, int n);
+int mul_fp(int x, int y);
+int mul_fp_int(int x, int n);
+int div_fp(int x, int y);
+int div_fp_int(int x, int n);
+void mlfqs_recal_priority (void);
+void mlfqs_recal_recentcpu(void);
+void mlfqs_cal_load_avg (void);
+void mlfqs_increment_recent_cpu (void);
 
 #endif /* threads/thread.h */
