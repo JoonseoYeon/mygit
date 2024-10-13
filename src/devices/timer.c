@@ -175,14 +175,7 @@ timer_interrupt (struct intr_frame *args UNUSED)
 
   /*정해진 tick마다 재계산*/
   if (thread_mlfqs) {
-    mlfqs_increment_recent_cpu ();
-    if (ticks % 4 == 0) {
-      mlfqs_recal_priority ();
-      if (ticks % TIMER_FREQ == 0) {
-        mlfqs_recal_recentcpu ();
-        mlfqs_cal_load_avg ();
-      }
-    }
+    update_thread_state(ticks);
   }
 
   thread_wake(ticks);

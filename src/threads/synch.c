@@ -206,7 +206,6 @@ lock_acquire (struct lock *lock)
 
   if (thread_mlfqs) {
     sema_down (&lock->semaphore);
-    //thread_current()->waiting_lock = NULL;
     lock->holder = thread_current ();
     return;
   }

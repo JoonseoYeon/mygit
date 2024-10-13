@@ -173,5 +173,6 @@ void mlfqs_recal_priority (void);
 void mlfqs_recal_recentcpu(void);
 void mlfqs_cal_load_avg (void);
 void mlfqs_increment_recent_cpu (void);
+void update_thread_state(const int64_t ticks);
 
 #endif /* threads/thread.h */

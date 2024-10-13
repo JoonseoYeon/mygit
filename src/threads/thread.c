@@ -20,8 +20,8 @@
    of thread.h for details. */
 #define THREAD_MAGIC 0xcd6abf4b
 /*advanced scheduler 구현*/
-#define F 1 << 14
-int load_avg;
+#define F (1 << 14)
+static int load_avg;
 
 /* List of processes in THREAD_READY state, that is, processes
    that are ready to run but not actually running. */
@@ -100,6 +100,7 @@ void mlfqs_recal_priority (void);
 void mlfqs_recal_recentcpu(void);
 void mlfqs_cal_load_avg (void);
 void mlfqs_increment_recent_cpu (void);
+void update_thread_state(const int64_t ticks);
 
 /* Initializes the threading system by transforming the code
    that's currently running into a thread.  This can't work in
@@ -128,6 +129,10 @@ thread_init (void)
   init_thread (initial_thread, "main", PRI_DEFAULT);
   initial_thread->status = THREAD_RUNNING;
   initial_thread->tid = allocate_tid ();
+  /*advanced scheduler 구현*/
+  //printf("init");
+  load_avg = 0;
+  //printf("%d",load_avg);
 }
 
 /* Starts preemptive thread scheduling by enabling interrupts.
@@ -145,9 +150,6 @@ thread_start (void)
 
   /* Wait for the idle thread to initialize idle_thread. */
   sema_down (&idle_started);
-  /*advanced scheduler 구현*/
-  load_avg = 0;
-  printf("asdfasdfasdfasdfasdf");
   }
 
 /* Called by the timer interrupt handler at each timer tick.
@@ -409,7 +411,12 @@ thread_set_nice (int nice UNUSED)
   enum intr_level old_level = intr_disable ();
   thread_current ()->nice = nice;
   if(thread_current()!=idle_thread){
-     thread_current()->priority = fp2int (add_fp_int (div_fp_int (thread_current()->recent_cpu, -4), PRI_MAX - thread_current()->nice * 2));
+     thread_current()->priority = PRI_MAX - fp2int_round(div_fp_int(thread_current()->recent_cpu, 4)) - (thread_current() -> nice) * 2;;
+     //thread_current()->priority = fp2int (add_fp_int (div_fp_int (thread_current()->recent_cpu, -4), PRI_MAX - thread_current()->nice * 2));
+    if (thread_current()->priority > PRI_MAX)
+        thread_current()->priority = PRI_MAX;
+    if (thread_current()->priority < PRI_MIN)
+        thread_current()->priority = PRI_MIN;
   }
   if(check_priority_yield())
     thread_yield();
@@ -429,7 +436,7 @@ thread_get_nice (void)
 
 /* Returns 100 times the system load average. */
 int
-thread_get_load_avg (void) 
+thread_get_load_avg (void)
 {
   int load_avg_get;
   enum intr_level old_level = intr_disable ();
@@ -761,8 +768,11 @@ void mlfqs_recal_priority (void)
   for (e = list_begin (&all_list); e != list_end (&all_list); e = list_next (e)) {
     struct thread *t = list_entry (e, struct thread, allelem);
     if(t != idle_thread) /*PRI_MAX-(t->recent_cpu/4) - (t->nice*2);*/
-      t->priority = fp2int (add_fp_int (div_fp_int (t->recent_cpu, -4), PRI_MAX - t->nice * 2));
-      /*fp2int(sub_fp(sub_fp(PRI_MAX,div_fp_int(t->recent_cpu,4)),t->nice*2));*/
+      t->priority = PRI_MAX - fp2int_round(div_fp_int(t->recent_cpu, 4)) - (t -> nice) * 2;;
+    if (t->priority > PRI_MAX)
+        t->priority = PRI_MAX;
+    if (t->priority < PRI_MIN)
+        t->priority = PRI_MIN;
   }
 }
 
@@ -780,13 +790,26 @@ void mlfqs_cal_load_avg (void)
   int ready_num = list_size(&ready_list);
   if(thread_current() != idle_thread)
     ready_num++;
-  printf("%d",load_avg);
-  load_avg = add_fp(mul_fp (div_fp (int2fp (59), int2fp (60)), load_avg), mul_fp_int (div_fp (int2fp (1), int2fp (60)), ready_num));
-  printf("kisskisskiss%d",load_avg);
+  load_avg = div_fp_int(add_fp_int(mul_fp_int(load_avg,59),ready_num), 60);
 }
 
 void mlfqs_increment_recent_cpu (void)
 {
+  //printf("cpu_before%d",thread_current()->recent_cpu);
   if (thread_current () != idle_thread)
     thread_current ()->recent_cpu = add_fp_int(thread_current ()->recent_cpu, 1);
+  //printf("cpu_after%d\n",thread_current()->recent_cpu);
 }
+
+void update_thread_state(const int64_t ticks)
+{
+  mlfqs_increment_recent_cpu ();
+  if (ticks % 100 == 0) {
+      mlfqs_cal_load_avg ();
+      mlfqs_recal_recentcpu ();
+  }
+  if (ticks % 4 == 0) {
+    mlfqs_recal_priority ();
+  }
+}
+
