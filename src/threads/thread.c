@@ -810,6 +810,7 @@ void update_thread_state(const int64_t ticks)
   }
   if (ticks % 4 == 0) {
     mlfqs_recal_priority ();
+    sorting_ready_list();
   }
 }
 
