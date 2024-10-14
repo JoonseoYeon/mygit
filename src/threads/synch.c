@@ -213,8 +213,7 @@ lock_acquire (struct lock *lock)
   if (lock->holder != NULL) //lock 사용중
   {
     thread_current()->waiting_lock = lock;
-    list_insert_ordered (&lock->holder->donators_list, &thread_current()->donate_elem, 
-    			donator_p_decreaing, NULL);
+    list_insert_ordered (&lock->holder->donators_list, &thread_current()->donate_elem, donator_p_decreaing, NULL);
     donate_priority ();
   }
 
